@@ -1,0 +1,36 @@
+<?php
+header('Content-type: text/html; charset=UTF-8');
+$mysqli = new mysqli('localhost', 'root', 'root') or die('Cannot connect to database');
+$mysqli->select_db('kolomiytsev') or die('Cannot select datebase');
+$mysqli->set_charset('utf8');
+mb_internal_encoding('UTF-8');
+
+$act = isset($_GET['act']) ? $_GET['act'] : 'list';
+
+switch ($act) {
+    case 'list':
+        $records = array();
+        $sel = $mysqli->query('SELECT * FROM entry');
+        while ($row = $sel->fetch_assoc()) {
+            $row['date'] = date('Y-m-d H:i:s', $row['date']);
+            if (mb_strlen($row['content']) > 100) {
+                $row['content'] = mb_substr(strip_tags($row['content']), 0, 97) . '...';
+            }
+            $row['content'] = nl2br($row['content']);
+            $records[] = $row;
+        }
+        require('templates/list.php');
+        break;
+    case 'view-entry':
+        if (!isset($_GET['id'])) die("Missing id parameter");
+        $id = intval($_GET['id']);
+
+        $row = $mysqli->query("SELECT * FROM entry WHERE id = $id")->fetch_assoc();
+        if (!row) die("No such entry!");
+
+        $row['date'] = date('Y-m-d H:i:s', $row['date']);
+        require('templates/entry.php');
+        break;
+}
+
+?>
